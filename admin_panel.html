@@ -1,13 +1,1 @@
-
-<!DOCTYPE html>
-<html><head><title>Admin Panel</title><script src="https://cdn.tailwindcss.com"></script></head>
-<body class="bg-white min-h-screen p-8">
-  <h1 class="text-3xl font-bold text-gray-800 mb-4">Subscriber Emails</h1>
-  <div class="bg-gray-100 p-4 rounded shadow max-w-xl mx-auto">
-    <ul>{% for email in subscribers %}
-      <li class="border-b py-2 text-gray-700">{{ email }}</li>{% endfor %}
-    </ul>
-  </div>
-  <a href="/" class="mt-6 inline-block text-blue-600 underline">← Back to Home</a>
-</body>
-</html>
+<h1>Subscribers</h1>{% for email in subscribers %}<p>{{ email }}</p>{% endfor %}
