@@ -9,6 +9,16 @@ import time
 app = Flask(__name__)
 app.secret_key = "vulnerax_secret"
 subscribers = []
+scheduler_started = False
+
+@app.before_request
+def start_scheduler_once():
+    global scheduler_started
+    if not scheduler_started:
+        thread = threading.Thread(target=run_weekly)
+        thread.daemon = True
+        thread.start()
+        scheduler_started = True
 
 @app.route("/")
 def home():
@@ -59,20 +69,12 @@ def report():
     pdf.output(file_path)
     return send_file(file_path, as_attachment=True)
 
-# Weekly scheduler simulation
 def run_weekly():
     while True:
         now = datetime.utcnow()
-        if now.weekday() == 6 and now.hour == 4 and now.minute == 0:  # Sunday 8AM UAE = 4AM UTC
+        if now.weekday() == 6 and now.hour == 4 and now.minute == 0:
             print("Weekly Report Task Triggered")
-            # logic to send reports to subscribers could go here
         time.sleep(60)
-
-@app.before_first_request
-def activate_scheduler():
-    thread = threading.Thread(target=run_weekly)
-    thread.daemon = True
-    thread.start()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
