@@ -1,1 +1,13 @@
-<h1>Subscribers</h1>{% for email in subscribers %}<p>{{ email }}</p>{% endfor %}
+
+<!DOCTYPE html>
+<html>
+<head><title>Admin Panel</title><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="p-8 bg-gray-50 text-gray-800">
+  <h1 class="text-xl font-bold mb-4">Admin Panel</h1>
+  <ul class="text-sm">
+    {% for email in subscribers %}
+    <li>{{ email }}</li>
+    {% endfor %}
+  </ul>
+</body>
+</html>
