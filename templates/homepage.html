@@ -11,7 +11,7 @@
 
   <header class="flex justify-between items-center p-4 bg-white border-b shadow-sm">
     <div class="flex items-center space-x-3">
-      <img src="/static/logo.png" alt="VulneraX Logo" class="h-10 w-10" />
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="VulneraX Logo" class="h-16 mx-auto mb-4" />
       <h1 class="text-2xl font-bold text-blue-700">VulneraX</h1>
     </div>
     <nav class="space-x-6 text-sm font-medium">
@@ -45,6 +45,23 @@
       </div>
     </form>
   </main>
+  <!-- Info Section -->
+<section class="bg-white py-10 px-4 text-center">
+  <h2 class="text-2xl font-bold text-blue-700 mb-2">What is VulneraX?</h2>
+  <p class="max-w-2xl mx-auto text-gray-600 mb-6">
+    VulneraX is an AI-powered cybersecurity agent that tracks global CVEs and threats daily. Stay protected with real-time insights, patch actions, and cyber awareness.
+  </p>
+  <form action="/subscribe" method="POST" class="max-w-xl mx-auto flex flex-col sm:flex-row items-center">
+    <input name="email" type="email" placeholder="Enter your email" class="flex-1 p-3 border border-gray-300 rounded mb-3 sm:mb-0 sm:mr-3" required>
+    <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">Subscribe</button>
+  </form>
+  <div class="mt-6">
+    <a href="/report" target="_blank" class="inline-block bg-green-600 text-white px-5 py-2 rounded hover:bg-green-700">
+      📄 Generate Report
+    </a>
+  </div>
+</section>
+
 
   <footer class="text-center text-sm text-gray-400 py-6">
     &copy; 2025 VulneraX. AI-powered CVE Insights.
