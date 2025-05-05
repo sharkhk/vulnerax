@@ -48,11 +48,16 @@ def generate_report():
     pdf.ln(10)
     pdf.set_font("Arial", size=12)
     pdf.multi_cell(0, 10, txt="This report includes:
-- Top 10 CVEs (scored by ML)
-- Real-world threat updates
-- Risk overview and visual breakdown
-- Recommended patch actions
-- Awareness advice.")
+"
+                              "- Top 10 CVEs (scored by ML)
+"
+                              "- Real-world threat updates
+"
+                              "- Risk overview and visual breakdown
+"
+                              "- Recommended patch actions
+"
+                              "- Awareness advice.")
     pdf.ln(5)
     pdf.cell(200, 10, txt="Generated: " + datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"), ln=True, align="L")
 
@@ -62,8 +67,10 @@ def generate_report():
     pdf.cell(200, 10, txt="Cyber Threat Highlights", ln=True)
     pdf.set_font("Arial", size=12)
     pdf.multi_cell(0, 10, txt="- Multiple zero-day exploits discovered in enterprise platforms.
-- Ransomware targeted critical sectors.
-- Sharp rise in phishing and malware campaigns.")
+"
+                              "- Ransomware targeted critical sectors.
+"
+                              "- Sharp rise in phishing and malware campaigns.")
 
     pdf.output("/mnt/data/weekly_report.pdf")
     return send_file("/mnt/data/weekly_report.pdf", as_attachment=True)
