@@ -47,17 +47,19 @@ def generate_report():
     pdf.cell(200, 10, txt="Weekly Cybersecurity Report", ln=True, align="C")
     pdf.ln(10)
     pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, txt="This report includes:
+    pdf.multi_cell(0, 10, txt=(
+        "This report includes:
 "
-                              "- Top 10 CVEs (scored by ML)
+        "- Top 10 CVEs (scored by ML)
 "
-                              "- Real-world threat updates
+        "- Real-world threat updates
 "
-                              "- Risk overview and visual breakdown
+        "- Risk overview and visual breakdown
 "
-                              "- Recommended patch actions
+        "- Recommended patch actions
 "
-                              "- Awareness advice.")
+        "- Awareness advice."
+    ))
     pdf.ln(5)
     pdf.cell(200, 10, txt="Generated: " + datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"), ln=True, align="L")
 
