@@ -1,12 +1,11 @@
-import os
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify
 from fpdf import FPDF
 from datetime import datetime
+import os
 
 # --- CONFIGURATION ---
 DB_PATH = 'vulnerax.db'
-os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 # --- APP SETUP ---
 app = Flask(__name__)
@@ -85,13 +84,11 @@ def subscribe():
 
 @app.route('/dashboard')
 def dashboard():
-    # Fetch summary stats
     conn = get_db_connection()
     total_cves = conn.execute('SELECT COUNT(*) FROM cves').fetchone()[0]
     high = conn.execute("SELECT COUNT(*) FROM cves WHERE risk_score >= 7").fetchone()[0]
     med = conn.execute("SELECT COUNT(*) FROM cves WHERE risk_score BETWEEN 4 AND 7").fetchone()[0]
     low = conn.execute("SELECT COUNT(*) FROM cves WHERE risk_score < 4").fetchone()[0]
-    # Recent CVEs
     recent = conn.execute('''
       SELECT cve_id, risk_score, published
       FROM cves ORDER BY published DESC LIMIT 5
@@ -110,8 +107,7 @@ def api_latest_cves():
       FROM cves ORDER BY published DESC LIMIT 10
     ''').fetchall()
     conn.close()
-    data = [dict(r) for r in rows]
-    return jsonify(data)
+    return jsonify([dict(r) for r in rows])
 
 @app.route('/report')
 def report():
@@ -119,7 +115,6 @@ def report():
 
 @app.route('/generate-report')
 def generate_report():
-    # generate PDF in /tmp for Render
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font('Arial', 'B', 16)
@@ -130,9 +125,9 @@ def generate_report():
     pdf.ln(5)
     pdf.set_font('Arial', 'I', 10)
     pdf.cell(0, 8, f'Generated on: {datetime.utcnow():%Y-%m-%d %H:%M UTC}', ln=True, align='R')
-    out = '/tmp/vulnerax_report.pdf'
-    pdf.output(out)
-    return send_file(out, as_attachment=True)
+    output_path = '/tmp/vulnerax_report.pdf'
+    pdf.output(output_path)
+    return send_file(output_path, as_attachment=True)
 
 @app.route('/admin')
 def admin_panel():
