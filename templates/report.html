@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>VulneraX Report</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="icon" href="{{ url_for('static','favicon.ico') }}"/>
+  <!-- Fixed: named parameter `filename` -->
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}"/>
 </head>
 <body class="bg-gray-50 text-gray-900">
 
