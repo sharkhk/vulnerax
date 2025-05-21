@@ -1,2 +1,3 @@
-Flask
-fpdf
+ Flask
+ fpdf
++python-dotenv
