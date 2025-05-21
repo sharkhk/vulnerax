@@ -1,22 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>VulneraX Report</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" />
+  <link rel="icon" href="{{ url_for('static','favicon.ico') }}"/>
 </head>
-<body class="bg-gray-50 text-gray-900 text-center py-16">
+<body class="bg-gray-50 text-gray-900">
 
-  <h1 class="text-4xl font-bold text-blue-700 mb-6">📄 Threat Intelligence Report</h1>
-  <p class="text-lg text-gray-600 mb-8">
-    Download the latest AI-generated CVE analysis and global threat insights.
-  </p>
+  <header class="p-4 bg-white border-b shadow-sm text-center">
+    <h1 class="text-2xl font-bold text-blue-700">📄 VulneraX Cyber Threat Report</h1>
+    <p class="text-gray-600">Last 10 days top CVEs & insights</p>
+  </header>
 
-  <a href="/generate-report"
-     class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition">
-    ⬇️ Download Latest Report
-  </a>
+  <main class="max-w-4xl mx-auto px-4 py-8 space-y-8">
+    <!-- PDF Preview -->
+    <iframe src="/download-report" class="w-full h-[600px] border rounded"></iframe>
+
+    <!-- Top-10 CVEs Table -->
+    <div class="bg-white rounded shadow overflow-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-blue-100 text-blue-800">
+          <tr>
+            <th class="px-4 py-2 text-left">CVE ID</th>
+            <th class="px-4 py-2 text-left">Summary</th>
+            <th class="px-4 py-2 text-left">Risk</th>
+            <th class="px-4 py-2 text-left">Published</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in cves %}
+          <tr class="border-b hover:bg-gray-50">
+            <td class="px-4 py-2 font-medium text-blue-700">{{ c['cve_id'] }}</td>
+            <td class="px-4 py-2">{{ c['summary'] }}</td>
+            <td class="px-4 py-2">{{ '%.1f'|format(c['risk_score']) }}</td>
+            <td class="px-4 py-2">{{ c['published'] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </main>
 </body>
 </html>
