@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()   # reads .env into os.environ
+
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify
 from fpdf import FPDF
