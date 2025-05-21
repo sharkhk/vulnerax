@@ -1,15 +1,21 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Report</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VulneraX Report</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" />
 </head>
-<body class="bg-gray-50 text-center text-gray-900 py-16">
-  <h1 class="text-4xl font-bold text-blue-700 mb-6">📄 VulneraX Threat Intelligence Report</h1>
+<body class="bg-gray-50 text-gray-900 text-center py-16">
+
+  <h1 class="text-4xl font-bold text-blue-700 mb-6">📄 Threat Intelligence Report</h1>
   <p class="text-lg text-gray-600 mb-8">
-    This report includes the latest critical CVEs and real-world attacks tracked by our AI agent.
+    Download the latest AI-generated CVE analysis and global threat insights.
   </p>
-  <a href="/generate-report" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition">
+
+  <a href="/generate-report"
+     class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition">
     ⬇️ Download Latest Report
   </a>
 </body>
