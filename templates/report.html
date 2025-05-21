@@ -1,47 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>VulneraX Report</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Fixed: named parameter `filename` -->
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>VulneraX Report</title><script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}"/>
-</head>
-<body class="bg-gray-50 text-gray-900">
+</head><body class="bg-gray-50 text-gray-900">
 
-  <header class="p-4 bg-white border-b shadow-sm text-center">
+  <header class="p-4 bg-white shadow text-center">
     <h1 class="text-2xl font-bold text-blue-700">📄 VulneraX Cyber Threat Report</h1>
-    <p class="text-gray-600">Last 10 days top CVEs & insights</p>
+    <p class="text-gray-600">Last 10 days CVEs & insights</p>
   </header>
 
   <main class="max-w-4xl mx-auto px-4 py-8 space-y-8">
-    <!-- PDF Preview -->
     <iframe src="/download-report" class="w-full h-[600px] border rounded"></iframe>
 
-    <!-- Top-10 CVEs Table -->
     <div class="bg-white rounded shadow overflow-auto">
       <table class="min-w-full text-sm">
         <thead class="bg-blue-100 text-blue-800">
           <tr>
-            <th class="px-4 py-2 text-left">CVE ID</th>
-            <th class="px-4 py-2 text-left">Summary</th>
-            <th class="px-4 py-2 text-left">Risk</th>
-            <th class="px-4 py-2 text-left">Published</th>
+            <th class="px-4 py-2">CVE ID</th>
+            <th class="px-4 py-2">Summary</th>
+            <th class="px-4 py-2">Risk</th>
+            <th class="px-4 py-2">Published</th>
+            <th class="px-4 py-2">Patch&nbsp;Rec.</th>
           </tr>
         </thead>
         <tbody>
           {% for c in cves %}
           <tr class="border-b hover:bg-gray-50">
-            <td class="px-4 py-2 font-medium text-blue-700">{{ c['cve_id'] }}</td>
+            <td class="px-4 py-2 text-blue-700">{{ c['cve_id'] }}</td>
             <td class="px-4 py-2">{{ c['summary'] }}</td>
             <td class="px-4 py-2">{{ '%.1f'|format(c['risk_score']) }}</td>
             <td class="px-4 py-2">{{ c['published'] }}</td>
+            <td class="px-4 py-2">See vendor advisory</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </main>
-</body>
-</html>
+</body></html>
