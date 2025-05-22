@@ -23,7 +23,7 @@ class PDFReport:
                 str(i), cve['id'],
                 str(cve.get('cvssScore', 'N/A')),
                 cve['publishedDate'][:10],
-                cve['description'][:100] + '...'
+                (cve['description'][:97] + '...') if len(cve['description']) > 100 else cve['description']
             ])
         table = Table(data, repeatRows=1)
         table.setStyle(TableStyle([
@@ -35,3 +35,4 @@ class PDFReport:
 
         doc.build(elements)
         return filepath
+
