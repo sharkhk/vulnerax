@@ -1,0 +1,7 @@
+FLASK_ENV=development
+NVD_API_KEY=your_nvd_api_key
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_PRICE_ID=price_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+REPORTS_DIR=./reports
+PORT=5000
