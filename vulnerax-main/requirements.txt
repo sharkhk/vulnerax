@@ -1,4 +1,0 @@
-Flask
-fpdf
-requests
-python-dotenv
