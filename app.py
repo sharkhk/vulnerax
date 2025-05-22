@@ -1,12 +1,11 @@
 import os
-from flask import Flask, jsonify, send_file
-from flask_restful import Api, Resource, reqparse
+import requests
+from flask import Flask, jsonify, send_file, request
 from flask_caching import Cache
 from config import DevelopmentConfig, ProductionConfig
 from cve_service import CVEService
 from report_generator import PDFReport
-from schemas import CVEQuerySchema, CVESchema
-from marshmallow import ValidationError
+from schemas import CVESchema
 from datetime import datetime
 
 def create_app():
@@ -15,35 +14,29 @@ def create_app():
     app.config.from_object(DevelopmentConfig if env == 'development' else ProductionConfig)
 
     cache = Cache(app)
-    api = Api(app)
 
-    parser = reqparse.RequestParser()
-    parser.add_argument('days', type=int, default=1, help='Days range')
-    parser.add_argument('limit', type=int, default=50, help='Max CVEs to return')
-
-    class CVEList(Resource):
-        @cache.cached(query_string=True)
-        def get(self):
-            args = parser.parse_args()
-            try:
-                raw = CVEService.fetch_recent_cves(args['days'], args['limit'])
-                simplified = [CVEService.simplify(i) for i in raw]
-                result = CVESchema(many=True).dump(simplified)
-                return jsonify({ 'count': len(result), 'cves': result })
-            except requests.RequestException as e:
-                return { 'error': str(e) }, 503
-
-    class CVEReport(Resource):
-        def get(self):
-            args = parser.parse_args()
-            raw = CVEService.fetch_recent_cves(args['days'], args['limit'])
+    @app.route('/api/cves', methods=['GET'])
+    @cache.cached(query_string=True)
+    def get_cves():
+        days = request.args.get('days', default=1, type=int)
+        limit = request.args.get('limit', default=50, type=int)
+        try:
+            raw = CVEService.fetch_recent_cves(days, limit)
             simplified = [CVEService.simplify(i) for i in raw]
-            filename = f"vulnerax_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.pdf"
-            path = PDFReport.generate(simplified, filename)
-            return send_file(path, as_attachment=True)
+            result = CVESchema(many=True).dump(simplified)
+            return jsonify({'count': len(result), 'cves': result})
+        except requests.RequestException as e:
+            return jsonify({'error': str(e)}), 503
 
-    api.add_resource(CVEList, '/api/cves')
-    api.add_resource(CVEReport, '/api/report')
+    @app.route('/api/report', methods=['GET'])
+    def get_report():
+        days = request.args.get('days', default=1, type=int)
+        limit = request.args.get('limit', default=50, type=int)
+        raw = CVEService.fetch_recent_cves(days, limit)
+        simplified = [CVEService.simplify(i) for i in raw]
+        filename = f"vulnerax_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.pdf"
+        path = PDFReport.generate(simplified, filename)
+        return send_file(path, as_attachment=True)
 
     return app
 
