@@ -1,40 +1,54 @@
-<!DOCTYPE html><html lang="en"><head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>VulneraX Report</title><script src="https://cdn.tailwindcss.com"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>VulneraX Live Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}"/>
-</head><body class="bg-gray-50 text-gray-900">
+</head>
+<body class="bg-gray-50 text-gray-900">
 
-  <header class="p-4 bg-white shadow text-center">
-    <h1 class="text-2xl font-bold text-blue-700">📄 VulneraX Cyber Threat Report</h1>
-    <p class="text-gray-600">Last 10 days CVEs & insights</p>
+  <header class="p-4 bg-white border-b shadow text-center">
+    <h1 class="text-2xl font-bold text-blue-700">📄 VulneraX Live CVE Report</h1>
+    <p class="text-gray-600">Top vulnerabilities from the last 10 days</p>
   </header>
 
-  <main class="max-w-4xl mx-auto px-4 py-8 space-y-8">
-    <iframe src="/download-report" class="w-full h-[600px] border rounded"></iframe>
-
-    <div class="bg-white rounded shadow overflow-auto">
+  <main class="max-w-4xl mx-auto p-6 space-y-8">
+    <!-- Table of last 10 CVEs -->
+    <div class="overflow-auto bg-white rounded shadow">
       <table class="min-w-full text-sm">
         <thead class="bg-blue-100 text-blue-800">
           <tr>
-            <th class="px-4 py-2">CVE ID</th>
-            <th class="px-4 py-2">Summary</th>
-            <th class="px-4 py-2">Risk</th>
-            <th class="px-4 py-2">Published</th>
-            <th class="px-4 py-2">Patch&nbsp;Rec.</th>
+            <th class="px-4 py-2 text-left">CVE ID</th>
+            <th class="px-4 py-2 text-left">Summary</th>
+            <th class="px-4 py-2 text-left">Risk</th>
+            <th class="px-4 py-2 text-left">Published</th>
+            <th class="px-4 py-2 text-left">Details</th>
           </tr>
         </thead>
         <tbody>
           {% for c in cves %}
           <tr class="border-b hover:bg-gray-50">
-            <td class="px-4 py-2 text-blue-700">{{ c['cve_id'] }}</td>
-            <td class="px-4 py-2">{{ c['summary'] }}</td>
-            <td class="px-4 py-2">{{ '%.1f'|format(c['risk_score']) }}</td>
-            <td class="px-4 py-2">{{ c['published'] }}</td>
-            <td class="px-4 py-2">See vendor advisory</td>
+            <td class="px-4 py-2 font-medium text-blue-700">{{ c.cve_id }}</td>
+            <td class="px-4 py-2">{{ c.summary }}</td>
+            <td class="px-4 py-2">{{ '%.1f'|format(c.risk_score) }}</td>
+            <td class="px-4 py-2">{{ c.published }}</td>
+            <td class="px-4 py-2">
+              <a href="{{ c.url }}" class="text-blue-600 hover:underline" target="_blank">View</a>
+            </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+
+    <div class="text-center">
+      <a href="/download-report"
+         class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition">
+        📥 Download PDF Report
+      </a>
+    </div>
   </main>
-</body></html>
+</body>
+</html>
