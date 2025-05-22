@@ -1,4 +1,4 @@
 Flask
 fpdf
-python-dotenv
 requests
+python-dotenv
