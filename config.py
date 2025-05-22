@@ -10,3 +10,10 @@ class Config:
     CACHE_TYPE = "SimpleCache"
     CACHE_DEFAULT_TIMEOUT = 300  # seconds
     REPORTS_DIR = os.getenv("REPORTS_DIR", "./reports")
+
+class DevelopmentConfig(Config):
+    DEBUG = True
+    CACHE_DEFAULT_TIMEOUT = 60
+
+class ProductionConfig(Config):
+    pass
