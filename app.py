@@ -1,108 +1,51 @@
-from flask import Flask, jsonify, request, send_file
-import requests
-from datetime import datetime, timedelta
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.units import inch
 import os
+from flask import Flask, jsonify, send_file
+from flask_restful import Api, Resource, reqparse
+from flask_caching import Cache
+from config import DevelopmentConfig, ProductionConfig
+from cve_service import CVEService
+from report_generator import PDFReport
+from schemas import CVEQuerySchema, CVESchema
+from marshmallow import ValidationError
+from datetime import datetime
 
-app = Flask(__name__)
+def create_app():
+    app = Flask(__name__)
+    env = os.getenv('FLASK_ENV', 'production')
+    app.config.from_object(DevelopmentConfig if env == 'development' else ProductionConfig)
 
-# NVD CVE API configuration
-NVD_API_URL = "https://services.nvd.nist.gov/rest/json/cves/1.0"
-API_KEY = os.getenv('NVD_API_KEY')  # Optional: set your NVD API key in env var
+    cache = Cache(app)
+    api = Api(app)
 
+    parser = reqparse.RequestParser()
+    parser.add_argument('days', type=int, default=1, help='Days range')
+    parser.add_argument('limit', type=int, default=50, help='Max CVEs to return')
 
-def fetch_recent_cves(days: int = 1):
-    """
-    Fetch CVE data published within the last `days` days from NVD.
-    """
-    start_date = (datetime.utcnow() - timedelta(days=days)).isoformat() + 'Z'
-    params = {
-        'pubStartDate': start_date,
-        'resultsPerPage': 50
-    }
-    headers = {}
-    if API_KEY:
-        headers['apiKey'] = API_KEY
+    class CVEList(Resource):
+        @cache.cached(query_string=True)
+        def get(self):
+            args = parser.parse_args()
+            try:
+                raw = CVEService.fetch_recent_cves(args['days'], args['limit'])
+                simplified = [CVEService.simplify(i) for i in raw]
+                result = CVESchema(many=True).dump(simplified)
+                return jsonify({ 'count': len(result), 'cves': result })
+            except requests.RequestException as e:
+                return { 'error': str(e) }, 503
 
-    resp = requests.get(NVD_API_URL, params=params, headers=headers)
-    resp.raise_for_status()
-    data = resp.json()
-    return data.get('result', {}).get('CVE_Items', [])
+    class CVEReport(Resource):
+        def get(self):
+            args = parser.parse_args()
+            raw = CVEService.fetch_recent_cves(args['days'], args['limit'])
+            simplified = [CVEService.simplify(i) for i in raw]
+            filename = f"vulnerax_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.pdf"
+            path = PDFReport.generate(simplified, filename)
+            return send_file(path, as_attachment=True)
 
+    api.add_resource(CVEList, '/api/cves')
+    api.add_resource(CVEReport, '/api/report')
 
-def simplify_cve_item(item: dict) -> dict:
-    """
-    Extract key fields from a raw CVE JSON item.
-    """
-    meta = item['cve']['CVE_data_meta']
-    desc_data = item['cve']['description']['description_data']
-    description = desc_data[0]['value'] if desc_data else 'No description available.'
-    impact = item.get('impact', {})
-    base_metric = impact.get('baseMetricV3', impact.get('baseMetricV2', {}))
-    score = base_metric.get('cvssV3', base_metric).get('baseScore', None)
-
-    return {
-        'id': meta.get('ID'),
-        'description': description,
-        'publishedDate': item.get('publishedDate'),
-        'lastModifiedDate': item.get('lastModifiedDate'),
-        'cvssScore': score
-    }
-
-
-def generate_pdf_report(cves: list, output_path: str = 'vulnerax_report.pdf') -> str:
-    """
-    Generate a PDF report listing CVEs with a simple layout.
-    """
-    c = canvas.Canvas(output_path, pagesize=letter)
-    width, height = letter
-    margin = inch
-
-    # Cover page
-    c.setFont("Helvetica-Bold", 24)
-    c.drawCentredString(width / 2, height - 2 * inch, "VulneraX Daily Threat Report")
-    c.setFont("Helvetica", 12)
-    c.drawCentredString(width / 2, height - 2.5 * inch, f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
-    c.showPage()
-
-    # Content pages
-    for idx, item in enumerate(cves, 1):
-        simple = simplify_cve_item(item)
-        y = height - margin
-        c.setFont("Helvetica-Bold", 16)
-        c.drawString(margin, y, f"{idx}. {simple['id']}  (Score: {simple.get('cvssScore', 'N/A')})")
-        y -= 20
-        c.setFont("Helvetica", 10)
-        text = c.beginText(margin, y)
-        for line in simple['description'].split('\n'):
-            text.textLine(line)
-        c.drawText(text)
-        c.showPage()
-
-    c.save()
-    return output_path
-
-
-@app.route('/api/cves', methods=['GET'])
-def api_get_cves():
-    days = int(request.args.get('days', 1))
-    raw_items = fetch_recent_cves(days)
-    simplified = [simplify_cve_item(i) for i in raw_items]
-    return jsonify({
-        'count': len(simplified),
-        'cves': simplified
-    })
-
-
-@app.route('/api/report', methods=['GET'])
-def api_get_report():
-    days = int(request.args.get('days', 1))
-    raw_items = fetch_recent_cves(days)
-    report_file = generate_pdf_report(raw_items)
-    return send_file(report_file, as_attachment=True, mimetype='application/pdf')
-
+    return app
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    create_app().run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
