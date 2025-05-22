@@ -1,4 +1,6 @@
 Flask
-fpdf
+Flask-Caching
 requests
+reportlab
+marshmallow
 python-dotenv
