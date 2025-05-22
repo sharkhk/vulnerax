@@ -22,8 +22,8 @@ class CVEService:
     @staticmethod
     def simplify(item: dict) -> dict:
         meta = item['cve']['CVE_data_meta']
-        desc = item['cve']['description']['description_data']
-        description = desc[0]['value'] if desc else ''
+        desc_data = item['cve']['description']['description_data']
+        description = desc_data[0]['value'] if desc_data else ''
         impact = item.get('impact', {})
         metric = impact.get('baseMetricV3', impact.get('baseMetricV2', {}))
         score = metric.get('cvssV3', metric).get('baseScore')
