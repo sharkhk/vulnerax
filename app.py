@@ -22,9 +22,13 @@ def create_app():
     def get_cves():
         days = request.args.get('days', default=30, type=int)
         limit = request.args.get('limit', default=100, type=int)
-        token = request.headers.get('Authorization', '').replace('Bearer ', '')
-        task_id = AgentManager.start_agent('coordinator', days, limit, token)
-        return jsonify({'task_id': task_id})
+        # Directly fetch CVEs for immediate display
+        try:
+            raw = CVEService.fetch_recent_cves(days, limit)
+            simple = [CVEService.simplify(item) for item in raw]
+            return jsonify({'count': len(simple), 'cves': simple})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
 
     @app.route('/api/agent/status/<task_id>')
     def agent_status(task_id):
