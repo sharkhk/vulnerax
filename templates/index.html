@@ -84,9 +84,103 @@
   <!-- Modals (omitted for brevity) -->
 
   <script>
-    // JavaScript logic to bind all buttons and fetch CVEs...
+    // Utility for toasts
+    function showToast(msg, type='info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `px-4 py-2 rounded shadow text-white ${
+        type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-blue-500'
+      }`;
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Fetch and render CVEs
+    let cveData = [];
+    async function fetchCVEs() {
+      document.getElementById('loader').classList.remove('hidden');
+      try {
+        const res = await fetch('/api/cves');
+        const json = await res.json();
+        if (json.error) {
+          showToast(`Error: ${json.error}`, 'error');
+          return;
+        }
+        cveData = json.cves;
+        renderCVEs(cveData);
+        updateCharts(cveData);
+        updateHeatmap(cveData);
+      } catch (e) {
+        showToast(`Fetch failed: ${e}`, 'error');
+      } finally {
+        document.getElementById('loader').classList.add('hidden');
+      }
+    }
+
+    // Render CVE cards
+    function renderCVEs(list) {
+      const container = document.getElementById('cve-list');
+      container.innerHTML = '';
+      list.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'bg-white dark:bg-gray-800 p-4 rounded shadow';
+        card.innerHTML = `
+          <div class="flex justify-between items-center mb-2">
+            <span class="font-bold">${c.id}</span>
+            <span class="px-2 py-1 rounded-full text-sm font-medium ${
+              c.cvssScore >= 7 ? 'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400' : 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400'
+            }">${c.cvssScore || 'N/A'}</span>
+          </div>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">${c.publishedDate.slice(0,10)}</p>
+          <p class="text-gray-800 dark:text-gray-200">${c.description.length > 100 ? c.description.slice(0,100) + '...' : c.description}</p>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Charts using Chart.js
+    const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+    const timelineChart = new Chart(timelineCtx, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'CVEs', data: [], fill: false }] },
+      options: { scales: { x: { type: 'time' }, y: { beginAtZero: true } } }
+    });
+    const severityCtx = document.getElementById('severityChart').getContext('2d');
+    const severityChart = new Chart(severityCtx, {
+      type: 'doughnut',
+      data: { labels: ['Low','Medium','High','Critical'], datasets: [{ data: [] }] }
+    });
+
+    function updateCharts(list) {
+      const dates = {};
+      const sevCount = [0,0,0,0];
+      list.forEach(c => {
+        const d = c.publishedDate.slice(0,10);
+        dates[d] = (dates[d] || 0) + 1;
+        const s = c.cvssScore || 0;
+        if (s < 4) sevCount[0]++;
+        else if (s < 7) sevCount[1]++;
+        else if (s < 9) sevCount[2]++;
+        else sevCount[3]++;
+      });
+      timelineChart.data.labels = Object.keys(dates);
+      timelineChart.data.datasets[0].data = Object.values(dates);
+      timelineChart.update();
+
+      severityChart.data.datasets[0].data = sevCount;
+      severityChart.update();
+    }
+
+    // Heatmap using Leaflet (placeholder without geodata)
+    function updateHeatmap(list) {
+      const map = L.map('heatmap').setView([20,0],2);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+      // For real implementation, map CVE to geo coords and add heat layer
+    }
+
+    // Initialize
     document.addEventListener('DOMContentLoaded', fetchCVEs);
-    // ...rest of script...
   </script>
 </body>
 </html>
