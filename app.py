@@ -6,6 +6,7 @@ from tasks import orchestrate_pipeline
 from agent_manager import AgentManager
 from stripe_integration import stripe_bp
 
+
 def create_app():
     app = Flask(__name__, template_folder='templates')
     env = os.getenv('FLASK_ENV', 'production')
@@ -21,7 +22,8 @@ def create_app():
     def get_cves():
         days = request.args.get('days', default=30, type=int)
         limit = request.args.get('limit', default=100, type=int)
-        task_id = AgentManager.start_agent('coordinator', days, limit)
+        token = request.headers.get('Authorization', '').replace('Bearer ', '')
+        task_id = AgentManager.start_agent('coordinator', days, limit, token)
         return jsonify({'task_id': task_id})
 
     @app.route('/api/agent/status/<task_id>')
