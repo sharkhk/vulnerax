@@ -1,0 +1,7 @@
+Flask
+Flask-Caching
+requests
+marshmallow
+reportlab
+stripe
+python-dotenv
