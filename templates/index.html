@@ -15,9 +15,213 @@
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <style>.loader{border-top-color:#3498db;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg);}}</style>
+  <style>
+    .loader { border-top-color: #3498db; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
-  <!-- ...rest of HTML as in canvas... -->
+  <!-- Toast Notifications -->
+  <div id="toastContainer" class="fixed top-5 right-5 space-y-2 z-50" aria-live="polite"></div>
+  <!-- Loader Overlay -->
+  <div id="loader" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center hidden" aria-hidden="true">
+    <div class="loader rounded-full border-8 border-t-8 border-gray-200 h-16 w-16"></div>
+  </div>
+
+  <!-- Top Bar: Tenant, Token, Theme, Language, Subscribe -->
+  <div class="bg-white dark:bg-gray-800 p-4 shadow flex flex-wrap items-center gap-4">
+    <select id="tenantSelect" aria-label="Select Tenant" class="p-2 border rounded bg-gray-50 dark:bg-gray-700">
+      <option>Default Tenant</option>
+    </select>
+    <input id="apiToken" type="text" placeholder="API token" class="flex-1 p-2 border rounded bg-gray-50 dark:bg-gray-700" />
+    <button id="saveToken" class="px-4 py-2 bg-indigo-600 text-white rounded">Save Token</button>
+    <select id="paletteSelect" aria-label="Theme Palette" class="p-2 border rounded bg-gray-50 dark:bg-gray-700">
+      <option>Indigo</option><option>Emerald</option><option>Rose</option>
+    </select>
+    <select id="langSelect" aria-label="Language" class="p-2 border rounded bg-gray-50 dark:bg-gray-700">
+      <option value="en">English</option><option value="ar">Arabic</option>
+    </select>
+    <button id="subscribeBtn" class="px-4 py-2 bg-yellow-500 text-white rounded">Subscribe</button>
+  </div>
+
+  <!-- Main Navigation and Search -->
+  <nav class="bg-white dark:bg-gray-800 shadow p-4 flex flex-wrap items-center justify-between">
+    <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">VulneraX</span>
+    <div class="flex-1 mx-4 flex gap-2">
+      <input id="search" type="search" placeholder="Search CVE or enter boolean query" aria-label="Search CVEs" class="flex-1 p-2 rounded border bg-gray-50 dark:bg-gray-700" />
+      <button id="searchBtn" class="px-4 bg-indigo-500 text-white rounded">Search</button>
+    </div>
+    <div class="flex gap-2">
+      <button id="exportBtn" class="px-3 py-1 bg-green-500 text-white rounded">Bulk Export</button>
+      <button id="templateBtn" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded">Report Template</button>
+      <button id="webhookBtn" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded">Webhooks</button>
+      <button id="integrationBtn" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded">Integrations</button>
+    </div>
+  </nav>
+
+  <!-- Dashboard Widgets Area -->
+  <section id="widgetArea" class="max-w-7xl mx-auto p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <!-- Placeholder widget cards -->
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">Widget 1</div>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">Widget 2</div>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">Widget 3</div>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">Widget 4</div>
+  </section>
+
+  <!-- Charts Section -->
+  <main class="max-w-7xl mx-auto p-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <canvas id="timelineChart" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4"></canvas>
+      <canvas id="severityChart" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4"></canvas>
+      <canvas id="forecastChart" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4"></canvas>
+    </div>
+
+    <!-- Global CVE Heatmap -->
+    <div id="heatmap" class="w-full h-64 mb-6 rounded-lg overflow-hidden"></div>
+
+    <!-- CVE Cards Listing -->
+    <div id="cve-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" role="region" aria-label="CVE listings"></div>
+  </main>
+
+  <!-- Modals: Export, Template, Webhook, Integration, Details, Compare, Comment -->
+  <!-- Export Modal -->
+  <div id="exportModal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" role="dialog" aria-modal="true">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-md">
+      <h3 class="text-xl font-bold mb-4">Bulk Export Options</h3>
+      <label class="inline-flex items-center"><input id="exportCsvToggle" type="checkbox" class="mr-2"/>Customize CSV columns</label>
+      <div id="csvColsConfig" class="mt-2 space-y-2 hidden">
+        <label><input type="checkbox" value="id" checked/> CVE ID</label>
+        <label><input type="checkbox" value="score" checked/> CVSS Score</label>
+        <label><input type="checkbox" value="publishedDate" checked/> Published Date</label>
+        <label><input type="checkbox" value="description" checked/> Description</label>
+      </div>
+      <div class="mt-6 flex justify-end space-x-2">
+        <button id="exportClose" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+        <button id="exportConfirm" class="px-4 py-2 bg-green-500 text-white rounded">Export</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Template Editor Modal -->
+  <div id="templateModal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" role="dialog">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-lg">
+      <h3 class="text-xl font-bold mb-4">Report Template Editor</h3>
+      <textarea id="templateEditor" class="w-full h-40 p-2 border rounded bg-gray-50 dark:bg-gray-700"></textarea>
+      <div class="mt-6 flex justify-end space-x-2">
+        <button id="templateClose" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+        <button id="templateSave" class="px-4 py-2 bg-indigo-600 text-white rounded">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Webhook Modal -->
+  <div id="webhookModal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" role="dialog">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-md">
+      <h3 class="text-xl font-bold mb-4">Webhook Configuration</h3>
+      <label class="block text-sm font-medium">Event Type</label>
+      <select id="webhookEvent" class="w-full p-2 border rounded mb-4">
+        <option value="newCve">New CVE</option>
+        <option value="highRisk">High Risk CVE</option>
+      </select>
+      <label class="block text-sm font-medium">Webhook URL</label>
+      <input id="webhookUrl" type="url" class="w-full p-2 border rounded mb-4" placeholder="https://..."/>
+      <div class="mt-6 flex justify-end space-x-2">
+        <button id="webhookClose" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+        <button id="webhookSave" class="px-4 py-2 bg-green-500 text-white rounded">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Integration Modal -->
+  <div id="integrationModal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" role="dialog">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-md">
+      <h3 class="text-xl font-bold mb-4">Ticketing Integrations</h3>
+      <label class="block text-sm font-medium">GitHub Repo URL</label>
+      <input id="githubRepo" type="url" class="w-full p-2 border rounded mb-4" placeholder="https://github.com/..."/>
+      <label class="block text-sm font-medium">Jira Project Key</label>
+      <input id="jiraProject" type="text" class="w-full p-2 border rounded mb-4" placeholder="ABC"/>
+      <div class="mt-6 flex justify-end space-x-2">
+        <button id="integrationClose" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+        <button id="integrationSave" class="px-4 py-2 bg-indigo-600 text-white rounded">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details Modal -->
+  <div id="detailsModal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" role="dialog" aria-modal="true">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-lg w-full focus:outline-none focus:ring-4" tabindex="0">
+      <h3 id="detailId" class="text-xl font-bold mb-2"></h3>
+      <p id="detailDesc" class="mb-2"></p>
+      <p><strong>Score:</strong> <span id="detailScore"></span></p>
+      <div class="mt-4 flex justify-end">
+        <button id="detailsClose" class="px-4 py-2 bg-indigo-600 text-white rounded">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compare Modal -->
+  <div id="compareModal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" role="dialog">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-2xl w-full">
+      <h3 class="text-xl font-bold mb-4">Compare CVEs</h3>
+      <div id="compareArea" class="grid grid-cols-2 gap-4 mb-4"></div>
+      <div class="flex justify-end">
+        <button id="compareClose" class="px-4 py-2 bg-indigo-600 text-white rounded">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comment Modal -->
+  <div id="commentModal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" role="dialog">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full">
+      <h3 class="text-xl font-bold mb-2">Add Comment</h3>
+      <textarea id="commentText" class="w-full p-2 border rounded bg-gray-50 dark:bg-gray-700 mb-4" rows="4" placeholder="Your comments..."></textarea>
+      <div class="flex justify-end">
+        <button id="commentClose" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+        <button id="commentSave" class="px-4 py-2 bg-green-500 text-white rounded">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize Stripe
+    const stripe = Stripe('pk_test_…');
+    // Utility for toasts
+    function showToast(msg, type='info'){ const c=document.getElementById('toastContainer'), d=document.createElement('div'); d.className=`px-4 py-2 rounded shadow text-white ${type==='error'?'bg-red-500':type==='success'?'bg-green-500':'bg-blue-500'}`; d.textContent=msg; c.appendChild(d); setTimeout(()=>d.remove(),3000); }
+    // Modal show/hide
+    const modalMap = { export: ['exportBtn','exportModal','exportClose'], template: ['templateBtn','templateModal','templateClose'], webhook: ['webhookBtn','webhookModal','webhookClose'], integration: ['integrationBtn','integrationModal','integrationClose'], details: [null,'detailsModal','detailsClose'], compare: [null,'compareModal','compareClose'], comment: [null,'commentModal','commentClose'] };
+    Object.values(modalMap).forEach(([btn,mid,close])=>{ if(btn){ document.getElementById(btn).onclick=()=>document.getElementById(mid).classList.remove('hidden'); } document.getElementById(close).onclick=()=>document.getElementById(mid).classList.add('hidden'); });
+    // Export toggle
+    document.getElementById('exportCsvToggle').onchange=e=>document.getElementById('csvColsConfig').classList.toggle('hidden',!e.target.checked);
+    document.getElementById('exportConfirm').onclick=()=>{ showToast('Export started','success'); document.getElementById('exportModal').classList.add('hidden'); };
+    // Other modal saves
+    document.getElementById('templateSave').onclick=()=>{showToast('Template saved','success');document.getElementById('templateModal').classList.add('hidden');};
+    document.getElementById('webhookSave').onclick=()=>{showToast('Webhook saved','success');document.getElementById('webhookModal').classList.add('hidden');};
+    document.getElementById('integrationSave').onclick=()=>{showToast('Integration saved','success');document.getElementById('integrationModal').classList.add('hidden');};
+
+    // Stripe subscribe
+    document.getElementById('subscribeBtn').onclick=async()=>{ const res=await fetch('/create-checkout-session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ success_url:window.location.origin, cancel_url:window.location.origin })}); const {sessionId}=await res.json(); const {error}=await stripe.redirectToCheckout({sessionId}); if(error) showToast(error.message,'error'); };
+
+    // CVE fetch & render logic (stubs)
+    let cveData=[];
+    async function fetchCVEs(){ document.getElementById('loader').classList.remove('hidden'); const token=localStorage.getItem('apiToken')||''; const res=await fetch('/api/cves',{headers:{'Authorization':'Bearer '+token}}); const data=await res.json(); cveData=data.cves; renderCVEs(); updateCharts(); updateHeatmap(); document.getElementById('loader').classList.add('hidden'); }
+    function renderCVEs(){ const container=document.getElementById('cve-list'); container.innerHTML=''; cveData.forEach(c=>{ const div=document.createElement('div'); div.className='bg-white dark:bg-gray-800 p-4 rounded shadow'; div.innerHTML=`<div class="flex justify-between"><span>${c.id}</span><input type="checkbox" onchange="toggleCompare('${c.id}')"></div><p>${c.description.slice(0,80)}...</p><button onclick="openDetails('${c.id}')" class="text-indigo-600">Details</button>`; container.appendChild(div); }); populateSuggestions(); }
+    function toggleCompare(id){ /* stub */ document.getElementById('compareModal').classList.remove('hidden'); }
+    function openDetails(id){ const c=cveData.find(x=>x.id===id); document.getElementById('detailId').textContent=c.id; document.getElementById('detailDesc').textContent=c.description; document.getElementById('detailScore').textContent=c.cvssScore; document.getElementById('detailsModal').classList.remove('hidden'); }
+
+    // Charts
+    const timelineChart=new Chart(document.getElementById('timelineChart').getContext('2d'),{type:'line',data:{labels:[],datasets:[{label:'CVEs',data:[],fill:false}]},options:{scales:{x:{type:'time'},y:{beginAtZero:true}}}});
+    const severityChart=new Chart(document.getElementById('severityChart').getContext('2d'),{type:'doughnut',data:{labels:['Critical','High','Medium','Low'],datasets:[{data:[0,0,0,0]}]}});
+    const forecastChart=new Chart(document.getElementById('forecastChart').getContext('2d'),{type:'bar',data:{labels:[],datasets:[{label:'Forecast',data:[]}]}},);
+    function updateCharts(){ const dates=cveData.map(c=>c.publishedDate.slice(0,10)),counts={}; dates.forEach(d=>counts[d]=(counts[d]||0)+1); timelineChart.data.labels=Object.keys(counts); timelineChart.data.datasets[0].data=Object.values(counts); timelineChart.update(); const sev=[0,0,0,0]; cveData.forEach(c=>{ const s=c.cvssScore; if(s>=9) sev[0]++; else if(s>=7) sev[1]++; else if(s>=4) sev[2]++; else sev[3]++; }); severityChart.data.datasets[0].data=sev; severityChart.update(); /* forecast stub */ }
+
+    // Heatmap
+    function updateHeatmap(){ const map=L.map('heatmap').setView([20,0],2); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(map); }
+
+    // Autocomplete
+    function populateSuggestions(){ const list=document.getElementById('cveSuggestions'); list.innerHTML=''; cveData.forEach(c=>{ const opt=document.createElement('option'); opt.value=c.id; list.appendChild(opt); }); }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded',fetchCVEs);
+  </script>
 </body>
 </html>
