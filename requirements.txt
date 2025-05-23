@@ -5,3 +5,5 @@ marshmallow
 reportlab
 stripe
 python-dotenv
+celery
+redis

@@ -1,13 +1,10 @@
 import os
-import requests
-from flask import Flask, jsonify, send_file, request, render_template
+from flask import Flask, jsonify, render_template, request
 from flask_caching import Cache
 from config import DevelopmentConfig, ProductionConfig
-from cve_service import CVEService
-from report_generator import PDFReport
-from schemas import CVESchema
+from tasks import orchestrate_pipeline
+from agent_manager import AgentManager
 from stripe_integration import stripe_bp
-from datetime import datetime
 
 def create_app():
     app = Flask(__name__, template_folder='templates')
@@ -20,27 +17,33 @@ def create_app():
     def index():
         return render_template('index.html')
 
-    @app.route('/api/cves', methods=['GET'])
+    @app.route('/api/cves')
     def get_cves():
-        days = request.args.get('days', default=1, type=int)
-        limit = request.args.get('limit', default=50, type=int)
-        try:
-            raw = CVEService.fetch_recent_cves(days, limit)
-            simple = [CVEService.simplify(i) for i in raw]
-            data = CVESchema(many=True).dump(simple)
-            return jsonify({'count': len(data), 'cves': data})
-        except requests.RequestException as e:
-            return jsonify({'error': str(e)}), 503
+        days = request.args.get('days', default=30, type=int)
+        limit = request.args.get('limit', default=100, type=int)
+        task_id = AgentManager.start_agent('coordinator', days, limit)
+        return jsonify({'task_id': task_id})
 
-    @app.route('/api/report', methods=['GET'])
-    def get_report():
-        days = request.args.get('days', default=1, type=int)
-        limit = request.args.get('limit', default=50, type=int)
-        raw = CVEService.fetch_recent_cves(days, limit)
-        simple = [CVEService.simplify(i) for i in raw]
-        filename = f"vulnerax_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.pdf"
-        path = PDFReport.generate(simple, filename)
-        return send_file(path, as_attachment=True)
+    @app.route('/api/agent/status/<task_id>')
+    def agent_status(task_id):
+        status = AgentManager.status(task_id)
+        return jsonify(status)
+
+    @app.route('/api/agent/cancel/<task_id>', methods=['POST'])
+    def agent_cancel(task_id):
+        result = AgentManager.revoke(task_id)
+        return jsonify(result)
+
+    @app.route('/api/agent/start/<agent_name>', methods=['POST'])
+    def agent_start(agent_name):
+        data = request.get_json() or {}
+        args = data.get('args', [])
+        kwargs = data.get('kwargs', {})
+        try:
+            task_id = AgentManager.start_agent(agent_name, *args, **kwargs)
+            return jsonify({'task_id': task_id})
+        except ValueError as e:
+            return jsonify({'error': str(e)}), 400
 
     return app
 
