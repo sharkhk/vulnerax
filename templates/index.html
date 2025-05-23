@@ -101,7 +101,7 @@
     async function fetchCVEs() {
       document.getElementById('loader').classList.remove('hidden');
       try {
-        const res = await fetch('/api/cves');
+        const res = await fetch('/api/cves?days=30&limit=100');
         const json = await res.json();
         if (json.error) {
           showToast(`Error: ${json.error}`, 'error');
