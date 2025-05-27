@@ -48,7 +48,7 @@
         const pub = c.publishedDate;
         const date = pub ? pub.toString().slice(0,10) : 'Unknown date';
         const score = (c.cvssScore !== null && c.cvssScore !== undefined) ? c.cvssScore : 'N/A';
-        const desc = c.description;
+        const desc = c.description || '';
         const text = (typeof desc === 'string')
           ? (desc.length > 100 ? desc.slice(0, 100) + '...' : desc)
           : '';
