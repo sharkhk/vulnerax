@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VulneraX Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://js.stripe.com/v3/"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -13,24 +12,51 @@
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
   <div class="p-4">
     <h1 class="text-2xl font-bold mb-4">VulneraX Dashboard</h1>
-    <button id="runPipeline" class="px-4 py-2 bg-indigo-600 text-white rounded">Run CVE Pipeline</button>
-    <input id="taskIdInput" type="text" placeholder="Task ID" class="ml-4 p-2 border rounded" />
-    <button id="checkStatus" class="px-4 py-2 bg-green-600 text-white rounded ml-2">Check Status</button>
-    <div id="statusOutput" class="mt-4 p-4 bg-white rounded shadow"></div>
+    <button id="loadDataBtn" class="px-4 py-2 bg-indigo-600 text-white rounded">Load CVE Data</button>
+    <div id="dataContainer" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
   </div>
   <script>
-    document.getElementById('runPipeline').addEventListener('click', async () => {
-      const res = await fetch('/api/cves', { method: 'GET' });
-      const json = await res.json();
-      document.getElementById('taskIdInput').value = json.task_id;
-      document.getElementById('statusOutput').textContent = 'Pipeline started, task ID: ' + json.task_id;
-    });
-    document.getElementById('checkStatus').addEventListener('click', async () => {
-      const tid = document.getElementById('taskIdInput').value;
-      const res = await fetch(`/api/agent/status/${tid}`);
-      const stat = await res.json();
-      document.getElementById('statusOutput').textContent = JSON.stringify(stat, null, 2);
-    });
+    async function loadCveData() {
+      const btn = document.getElementById('loadDataBtn');
+      btn.disabled = true;
+      btn.textContent = 'Loading...';
+      try {
+        const res = await fetch('/api/cves');
+        const data = await res.json();
+        if (data.error) {
+          alert('Error: ' + data.error);
+        } else {
+          renderCves(data.cves);
+        }
+      } catch (e) {
+        alert('Fetch error: ' + e);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Load CVE Data';
+      }
+    }
+
+    function renderCves(cves) {
+      const container = document.getElementById('dataContainer');
+      container.innerHTML = '';
+      if (!cves || cves.length === 0) {
+        container.textContent = 'No CVEs found.';
+        return;
+      }
+      cves.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'bg-white dark:bg-gray-800 p-4 rounded shadow';
+        card.innerHTML = `
+          <h2 class="font-bold mb-1">${c.id}</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">${c.publishedDate.slice(0,10)}</p>
+          <p class="mb-2">Score: <strong>${c.cvssScore || 'N/A'}</strong></p>
+          <p class="text-gray-800 dark:text-gray-200">${c.description.length > 100 ? c.description.slice(0,100) + '...' : c.description}</p>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    document.getElementById('loadDataBtn').addEventListener('click', loadCveData);
   </script>
 </body>
 </html>
