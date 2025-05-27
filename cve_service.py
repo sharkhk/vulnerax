@@ -13,15 +13,9 @@ class CVEService:
             'resultsPerPage': limit
         }
         headers = {
-            'User-Agent': 'VulneraX-Agentic/1.0'
+            'User-Agent': 'VulneraX-Agentic/1.0',
+            'apiKey': current_app.config['NVD_API_KEY']
         }
-        # Pass api key as query parameter as required
-        api_key = current_app.config.get('NVD_API_KEY')
-        if api_key:
-            params['apiKey'] = api_key
-        api_key = current_app.config.get('NVD_API_KEY')
-        if api_key:
-            headers['apiKey'] = api_key
         resp = requests.get(
             current_app.config['NVD_API_URL'],
             params=params,
