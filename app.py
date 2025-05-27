@@ -2,10 +2,7 @@ import os
 from flask import Flask, jsonify, render_template, request
 from flask_caching import Cache
 from config import DevelopmentConfig, ProductionConfig
-from tasks import orchestrate_pipeline
 from cve_service import CVEService
-from agent_manager import AgentManager
-from stripe_integration import stripe_bp
 
 
 def create_app():
@@ -13,7 +10,6 @@ def create_app():
     env = os.getenv('FLASK_ENV', 'production')
     app.config.from_object(DevelopmentConfig if env == 'development' else ProductionConfig)
     Cache(app)
-    app.register_blueprint(stripe_bp)
 
     @app.route('/')
     def index():
@@ -23,34 +19,12 @@ def create_app():
     def get_cves():
         days = request.args.get('days', default=30, type=int)
         limit = request.args.get('limit', default=100, type=int)
-        # Directly fetch CVEs for immediate display
         try:
             raw = CVEService.fetch_recent_cves(days, limit)
-            simple = [CVEService.simplify(item) for item in raw]
+            simple = [CVEService.simplify(i) for i in raw]
             return jsonify({'count': len(simple), 'cves': simple})
         except Exception as e:
             return jsonify({'error': str(e)}), 500
-
-    @app.route('/api/agent/status/<task_id>')
-    def agent_status(task_id):
-        status = AgentManager.status(task_id)
-        return jsonify(status)
-
-    @app.route('/api/agent/cancel/<task_id>', methods=['POST'])
-    def agent_cancel(task_id):
-        result = AgentManager.revoke(task_id)
-        return jsonify(result)
-
-    @app.route('/api/agent/start/<agent_name>', methods=['POST'])
-    def agent_start(agent_name):
-        data = request.get_json() or {}
-        args = data.get('args', [])
-        kwargs = data.get('kwargs', {})
-        try:
-            task_id = AgentManager.start_agent(agent_name, *args, **kwargs)
-            return jsonify({'task_id': task_id})
-        except ValueError as e:
-            return jsonify({'error': str(e)}), 400
 
     return app
 
