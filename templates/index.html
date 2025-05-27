@@ -39,18 +39,25 @@
     function renderCves(cves) {
       const container = document.getElementById('dataContainer');
       container.innerHTML = '';
-      if (!cves || cves.length === 0) {
+      if (!Array.isArray(cves) || cves.length === 0) {
         container.textContent = 'No CVEs found.';
         return;
       }
       cves.forEach(c => {
+        const id = c.id || 'Unknown ID';
+        const pub = c.publishedDate;
+        const date = pub ? pub.toString().slice(0,10) : 'Unknown date';
+        const score = (c.cvssScore !== null && c.cvssScore !== undefined) ? c.cvssScore : 'N/A';
+        const desc = c.description;
+        const text = desc ? (desc.length > 100 ? desc.slice(0,100) + '...' : desc) : '';
+
         const card = document.createElement('div');
         card.className = 'bg-white dark:bg-gray-800 p-4 rounded shadow';
         card.innerHTML = `
-          <h2 class="font-bold mb-1">${c.id}</h2>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">${c.publishedDate ? c.publishedDate.slice(0,10) : 'Unknown date'}</p>
-          <p class="mb-2">Score: <strong>${c.cvssScore || 'N/A'}</strong></p>
-          <p class="text-gray-800 dark:text-gray-200">${c.description.length > 100 ? c.description.slice(0,100) + '...' : c.description}</p>
+          <h2 class="font-bold mb-1">${id}</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">${date}</p>
+          <p class="mb-2">Score: <strong>${score}</strong></p>
+          <p class="text-gray-800 dark:text-gray-200">${text}</p>
         `;
         container.appendChild(card);
       });
