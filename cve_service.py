@@ -17,10 +17,16 @@ class CVEService:
 
     @staticmethod
     def simplify(item: dict) -> dict:
+        # Handle both lowercase and uppercase keys
+        cve_id = item.get('id') or item.get('ID') or 'Unknown ID'
+        desc = item.get('summary') or item.get('Summary') or ''
+        pub = item.get('Published') or item.get('published') or ''
+        mod = item.get('Modified') or item.get('modified') or ''
+        score = item.get('cvss') or item.get('CVSS')
         return {
-            'id': item.get('id'),
-            'description': item.get('summary', ''),
-            'publishedDate': item.get('Published'),
-            'lastModifiedDate': item.get('Modified'),
-            'cvssScore': item.get('cvss')
+            'id': cve_id,
+            'description': desc,
+            'publishedDate': pub,
+            'lastModifiedDate': mod,
+            'cvssScore': score
         }
