@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VulneraX Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
   <div class="p-4">
@@ -49,9 +46,7 @@
         const date = pub ? pub.toString().slice(0,10) : 'Unknown date';
         const score = (c.cvssScore !== null && c.cvssScore !== undefined) ? c.cvssScore : 'N/A';
         const desc = c.description || '';
-        const text = (typeof desc === 'string')
-          ? (desc.length > 100 ? desc.slice(0, 100) + '...' : desc)
-          : '';
+        const text = desc.length > 100 ? desc.slice(0,100) + '...' : desc;
 
         const card = document.createElement('div');
         card.className = 'bg-white dark:bg-gray-800 p-4 rounded shadow';
