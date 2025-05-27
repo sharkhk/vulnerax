@@ -48,7 +48,7 @@
         card.className = 'bg-white dark:bg-gray-800 p-4 rounded shadow';
         card.innerHTML = `
           <h2 class="font-bold mb-1">${c.id}</h2>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">${c.publishedDate.slice(0,10)}</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">${c.publishedDate ? c.publishedDate.slice(0,10) : 'Unknown date'}</p>
           <p class="mb-2">Score: <strong>${c.cvssScore || 'N/A'}</strong></p>
           <p class="text-gray-800 dark:text-gray-200">${c.description.length > 100 ? c.description.slice(0,100) + '...' : c.description}</p>
         `;
