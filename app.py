@@ -3,6 +3,7 @@ from flask import Flask, jsonify, render_template, request
 from flask_caching import Cache
 from config import DevelopmentConfig, ProductionConfig
 from tasks import orchestrate_pipeline
+from cve_service import CVEService
 from agent_manager import AgentManager
 from stripe_integration import stripe_bp
 
