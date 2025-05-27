@@ -4,20 +4,40 @@ from flask import current_app
 
 class CVEService:
     @staticmethod
-    def fetch_recent_cves(days: int, limit: int):
-        start = (datetime.utcnow() - timedelta(days=days)).isoformat() + 'Z'
-        params = {
-            'pubStartDate': start,
-            'resultsPerPage': limit
-        }
-        headers = {}
-        api_key = current_app.config['NVD_API_KEY']
-        if api_key:
-            headers['apiKey'] = api_key
+    --- cve_service.py
++++ cve_service.py
+@@ def fetch_recent_cves(days: int, limit: int):
+-        start = (datetime.utcnow() - timedelta(days=days)).isoformat() + 'Z'
+-        params = {
+-            'pubStartDate': start,
+-            'resultsPerPage': limit
+-        }
+-        headers = {}
+-        api_key = current_app.config['NVD_API_KEY']
+-        if api_key:
+-            headers['apiKey'] = api_key
++        end = datetime.utcnow().isoformat() + 'Z'
++        start = (datetime.utcnow() - timedelta(days=days)).isoformat() + 'Z'
++        params = {
++            'pubStartDate': start,
++            'pubEndDate': end,
++            'resultsPerPage': limit
++        }
++        headers = {
++            'User-Agent': 'VulneraX-Agentic/1.0'
++        }
++        api_key = current_app.config.get('NVD_API_KEY')
++        if api_key:
++            headers['apiKey'] = api_key
 
-        resp = requests.get(current_app.config['NVD_API_URL'], params=params, headers=headers, timeout=10)
-        resp.raise_for_status()
-        return resp.json().get('result', {}).get('CVE_Items', [])
+-        resp = requests.get(current_app.config['NVD_API_URL'], params=params, headers=headers, timeout=10)
++        resp = requests.get(
++            current_app.config['NVD_API_URL'],
++            params=params,
++            headers=headers,
++            timeout=10
++        )
+
 
     @staticmethod
     def simplify(item: dict) -> dict:
