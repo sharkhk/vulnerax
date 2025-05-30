@@ -37,27 +37,23 @@
       if(!Array.isArray(items) || items.length==0) {
         container.textContent='No entries.'; return;
       }
-      items.forEach(c => renderCard(c));
+      items.forEach(c=>renderCard(c));
     }
 
     function renderCard(c){
       const id=c.id||'Unknown';
       const date=c.publishedDate||'Unknown';
-      const score=(c.cvssScore!==null && c.cvssScore!==undefined) ? c.cvssScore : 'N/A';
+      const score=c.cvssScore||'N/A';
       const desc=c.description||'';
       const text=desc.length>100?desc.slice(0,100)+'...':desc;
       const card=document.createElement('div');
       card.className='bg-white dark:bg-gray-800 p-4 rounded shadow';
-      card.innerHTML=`
-        <h2 class="font-bold mb-1">${id}</h2>
-        <p class="text-sm text-gray-600 mb-2">${date}</p>
-        <p class="mb-2">Score: <strong>${score}</strong></p>
-        <p>${text}</p>`;
+      card.innerHTML=`<h2 class="font-bold mb-1">${id}</h2><p class="text-sm text-gray-600 mb-2">${date}</p><p class="mb-2">Score: <strong>${score}</strong></p><p>${text}</p>`;
       document.getElementById('dataContainer').appendChild(card);
     }
 
     document.getElementById('loadDataBtn').addEventListener('click', () =>
-      loadData('/api/cves', d=>renderList(d.cves))
+      loadData('/api/cves?limit=100', d=>renderList(d.cves))
     );
     document.getElementById('searchBtn').addEventListener('click', ()=>{
       const id=document.getElementById('searchInput').value.trim();
